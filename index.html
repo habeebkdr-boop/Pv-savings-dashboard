@@ -211,6 +211,43 @@ Papa.parse(dashboardCSV,{
         // Update pie chart legend
         document.getElementById("pieLegend").innerHTML = `
             <span><span class="legend-color" style="background:#b91c1c;"></span> Lent Out: ${formatCurrency(loanOutstandingRaw)} (${lentPercent}%)</span>
+/* DASHBOARD DATA */
+Papa.parse(dashboardCSV,{
+    download:true,
+    complete:function(results){
+
+        const rows = results.data;
+
+        function getCell(r,c){
+            return rows[r-1]?.[c-1] || "0";
+        }
+
+        // Get raw values
+        const totalSavingsRaw = cleanNumber(getCell(5,3));
+        const emergencyRaw = cleanNumber(getCell(9,3));
+        const loanOutstandingRaw = cleanNumber(getCell(7,3));
+        const activeLoansRaw = cleanNumber(getCell(5,5));
+        const activeMembersRaw = cleanNumber(getCell(5,1));
+        
+        // ✅ CORRECTED: Available Cash = Savings + Emergency - Loan Outstanding
+        const availableCashRaw = totalSavingsRaw + emergencyRaw - loanOutstandingRaw;
+
+        // Format for display
+        document.getElementById("totalSavings").innerText = formatCurrency(totalSavingsRaw);
+        document.getElementById("emergencyFund").innerText = formatCurrency(emergencyRaw);
+        document.getElementById("actualBalance").innerText = formatCurrency(availableCashRaw);
+        document.getElementById("loanOutstanding").innerText = formatCurrency(loanOutstandingRaw);
+        document.getElementById("activeLoans").innerText = activeLoansRaw;
+        document.getElementById("activeMembers").innerText = activeMembersRaw;
+
+        // Calculate percentages for pie chart (based on total funds = Savings + Emergency)
+        const totalFunds = totalSavingsRaw + emergencyRaw;
+        const lentPercent = ((loanOutstandingRaw / totalFunds) * 100).toFixed(1);
+        const availablePercent = ((availableCashRaw / totalFunds) * 100).toFixed(1);
+
+        // Update pie chart legend
+        document.getElementById("pieLegend").innerHTML = `
+            <span><span class="legend-color" style="background:#b91c1c;"></span> Lent Out: ${formatCurrency(loanOutstandingRaw)} (${lentPercent}%)</span>
             <span><span class="legend-color" style="background:#059669;"></span> Available: ${formatCurrency(availableCashRaw)} (${availablePercent}%)</span>
         `;
 
@@ -234,7 +271,7 @@ Papa.parse(dashboardCSV,{
                             label:function(context){
                                 let label = context.label || '';
                                 let value = context.raw || 0;
-                                let percentage = ((value / totalSavingsRaw) * 100).toFixed(1);
+                                let percentage = ((value / totalFunds) * 100).toFixed(1);
                                 return `${label}: ${formatCurrency(value)} (${percentage}%)`;
                             }
                         }
@@ -299,5 +336,6 @@ Papa.parse(ledgerCSV,{
 </script>
 
 </body>
+
 
 </html>
